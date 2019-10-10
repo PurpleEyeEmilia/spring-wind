@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 public class DistributedLockAspect {
 
     @Resource
-    private StringRedisTemplate redisTemplate;
+    private StringRedisTemplate stringRedisTemplate;
 
     private static final String GET = "get";
 
@@ -57,8 +57,15 @@ public class DistributedLockAspect {
         long nanoTime = System.nanoTime();
         try {
             while (System.nanoTime() - nanoTime < nanoTimeOut) {
-                Boolean lock = redisTemplate.opsForValue().setIfAbsent(lockTrueKey, LOCK_VALUE, expiredTime, TimeUnit.SECONDS);
+//                Boolean lock = stringRedisTemplate.opsForValue().setIfAbsent(lockTrueKey, LOCK_VALUE, expiredTime, TimeUnit.SECONDS);
+                Boolean lock = stringRedisTemplate.opsForValue().setIfAbsent(lockTrueKey, LOCK_VALUE);
                 if (lock != null && lock) {
+                    Boolean expire = stringRedisTemplate.expire(lockTrueKey, expiredTime, TimeUnit.SECONDS);
+                    if (expire != null && !expire) {
+                        log.warn("设置锁过期时间失败！");
+                        stringRedisTemplate.delete(lockTrueKey);
+                        continue;
+                    }
                     log.info("redis lock success, lockKey: {}", lockTrueKey);
                     return;
                 }
@@ -74,7 +81,7 @@ public class DistributedLockAspect {
             log.error("设置分布式锁出错！", e);
             throw new CommonException("设置分布式锁出错！");
         } finally {
-            redisTemplate.delete(lockTrueKey);
+            stringRedisTemplate.delete(lockTrueKey);
         }
     }
 
@@ -82,7 +89,7 @@ public class DistributedLockAspect {
     public void unlock(JoinPoint joinPoint, DistributedLock distributedLock) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         GetLockKey getLockKey = new GetLockKey(joinPoint, distributedLock).invoke();
         try {
-            redisTemplate.delete(getLockKey.getLockTrueKey());
+            stringRedisTemplate.delete(getLockKey.getLockTrueKey());
             log.info("释放分布式锁成功！lockKey: {}", getLockKey.getLockTrueKey());
         } catch (Exception e) {
             log.error("释放分布式锁失败！", e);

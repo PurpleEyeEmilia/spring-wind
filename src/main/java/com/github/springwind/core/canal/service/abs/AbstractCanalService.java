@@ -111,7 +111,7 @@ public abstract class AbstractCanalService {
             }
 
             if (CanalEntry.EntryType.ROWDATA == entry.getEntryType()) {
-                CanalEntry.RowChange rowChange = null;
+                CanalEntry.RowChange rowChange;
                 try {
                     rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
                 } catch (Exception e) {

@@ -1,6 +1,6 @@
 package com.github.springwind.modules.service;
 
-import com.github.springwind.modules.entity.User;
+import com.github.springwind.modules.entity.UserInfo;
 
 /**
  * @author pengnian
@@ -20,8 +20,8 @@ public interface UserService {
     /**
      * 新增用户
      *
-     * @param user
+     * @param userInfo
      * @return
      */
-    String addUser(User user);
+    String addUser(UserInfo userInfo);
 }
