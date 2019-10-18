@@ -38,10 +38,11 @@ public class CanalProperties {
     /**
      * 用户
      */
-    String username;
+    private String username;
 
     /**
      * 密码
      */
-    String password;
+    private String password;
+
 }

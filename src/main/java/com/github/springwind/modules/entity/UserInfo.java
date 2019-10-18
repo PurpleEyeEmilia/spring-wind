@@ -2,7 +2,6 @@ package com.github.springwind.modules.entity;
 
 import lombok.Data;
 import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldIndex;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 /**
@@ -30,4 +29,9 @@ public class UserInfo {
     @Field(type = FieldType.Integer)
     private Integer age;
 
+    /**
+     * 个性签名
+     */
+    @Field(type = FieldType.String)
+    private String sign;
 }

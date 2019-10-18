@@ -3,20 +3,29 @@ package com.github.springwind.modules.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.github.springwind.common.constants.CommonConstants;
 import com.github.springwind.common.utils.CanalEntityParser;
+import com.github.springwind.common.utils.Page;
 import com.github.springwind.core.canal.entity.CanalMsg;
 import com.github.springwind.core.sync.SyncExecutor;
 import com.github.springwind.core.sync.SyncHandler;
 import com.github.springwind.modules.dao.UserDao;
 import com.github.springwind.modules.dao.UserEsDao;
 import com.github.springwind.modules.entity.UserAccount;
+import com.github.springwind.modules.entity.UserDto;
 import com.github.springwind.modules.entity.UserEsInfo;
 import com.github.springwind.modules.entity.UserInfo;
 import com.github.springwind.modules.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.index.query.*;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @author pengnian
@@ -36,6 +45,9 @@ public class UserServiceImpl implements UserService, SyncHandler {
 
     @Resource
     private SyncExecutor syncExecutor;
+
+    @Resource
+    private ElasticsearchTemplate elasticsearchTemplate;
 
     @PostConstruct
     private void register() {
@@ -149,12 +161,30 @@ public class UserServiceImpl implements UserService, SyncHandler {
 
     @Override
     public String getUser(String id) {
-
         return userDao.getUser(id);
     }
 
     @Override
     public String addUser(UserInfo userInfo) {
-        return null;
+        return userDao.addUser(userInfo);
+    }
+
+    @Override
+    public Page<UserEsInfo> getPageInfo(UserDto userDto) {
+        MatchQueryBuilder matchQueryBuilder = QueryBuilders.matchQuery("userInfo.name", userDto.getName());
+
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("userInfo.age", userDto.getAge());
+
+        WildcardQueryBuilder wildcardQueryBuilder = QueryBuilders.wildcardQuery("userInfo.sign", "*" + userDto.getSign() + "*");
+
+        PageRequest pageRequest = new PageRequest(userDto.getPageNo(), userDto.getPageSize(), Sort.Direction.DESC, "userId");
+
+        NativeSearchQuery build = new NativeSearchQueryBuilder().withFilter(
+                QueryBuilders.boolQuery().must(termQueryBuilder).should(matchQueryBuilder).should(wildcardQueryBuilder)
+        ).withPageable(pageRequest).build();
+
+        List<UserEsInfo> userEsInfos = elasticsearchTemplate.queryForList(build, UserEsInfo.class);
+
+        return new Page<>(userDto.getPageNo(), userDto.getPageSize(), userEsInfos);
     }
 }

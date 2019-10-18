@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.otter.canal.client.CanalConnector;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.alibaba.otter.canal.protocol.Message;
+import com.github.springwind.common.exception.CommonException;
 import com.github.springwind.core.canal.entity.CanalChangeInfo;
 import com.github.springwind.core.canal.entity.CanalMsg;
 import com.github.springwind.core.mq.constants.AmqpContants;
@@ -80,7 +81,7 @@ public abstract class AbstractCanalService {
                     long batchId = message.getId();
                     int size = message.getEntries().size();
                     if (batchId == 0 || size <= 0) {
-                        log.info("Empty canal message");
+                        log.debug("Empty canal message");
                     } else {
                         processEntry(message.getEntries());
                     }
@@ -116,7 +117,7 @@ public abstract class AbstractCanalService {
                     rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
                 } catch (Exception e) {
                     log.error("Error parse {}", entry.toString(), e);
-                    throw new RuntimeException("Error parse entry!");
+                    throw new CommonException("Error parse entry!");
                 }
 
                 CanalEntry.EventType eventType = rowChange.getEventType();

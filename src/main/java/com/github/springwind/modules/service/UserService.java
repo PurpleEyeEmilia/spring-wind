@@ -1,5 +1,8 @@
 package com.github.springwind.modules.service;
 
+import com.github.springwind.common.utils.Page;
+import com.github.springwind.modules.entity.UserDto;
+import com.github.springwind.modules.entity.UserEsInfo;
 import com.github.springwind.modules.entity.UserInfo;
 
 /**
@@ -24,4 +27,12 @@ public interface UserService {
      * @return
      */
     String addUser(UserInfo userInfo);
+
+    /**
+     * 查询分页
+     *
+     * @param userDto
+     * @return
+     */
+    Page<UserEsInfo> getPageInfo(UserDto userDto);
 }

@@ -36,6 +36,7 @@ public class CanalService extends AbstractCanalService {
             try {
                 log.info("Canal client stopping");
                 client.stop();
+                log.info("Canal client stopped");
             } catch (Exception e) {
                 log.error("Something goes wrong when stopping canal", e);
             } finally {

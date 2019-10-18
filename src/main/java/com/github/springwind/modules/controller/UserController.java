@@ -1,12 +1,12 @@
 package com.github.springwind.modules.controller;
 
+import com.github.springwind.common.utils.Page;
+import com.github.springwind.modules.entity.UserDto;
+import com.github.springwind.modules.entity.UserEsInfo;
 import com.github.springwind.modules.entity.UserInfo;
 import com.github.springwind.modules.service.UserService;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -36,6 +36,12 @@ public class UserController {
     public String addUser(UserInfo userInfo) {
 //        stringRedisTemplate.opsForValue().set("xx", "1");
         return userService.addUser(userInfo);
+    }
+
+    @GetMapping("/page/info")
+    @ResponseBody
+    public Page<UserEsInfo> getPageInfo(UserDto userDto) {
+        return userService.getPageInfo(userDto);
     }
 
 }
