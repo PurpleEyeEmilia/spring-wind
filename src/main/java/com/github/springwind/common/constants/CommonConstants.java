@@ -9,7 +9,9 @@ package com.github.springwind.common.constants;
 public class CommonConstants {
 
     public static class User {
-        public static final String USER_DB_NAME = "user";
+        public static final String USER_DB_NAME = "wind_user";
+
+        public static final String USER_ACCOUNT_DB_NAME = "wind_account";
 
         public static final String USER_INFO_TABLE_NAME = "user_info";
 

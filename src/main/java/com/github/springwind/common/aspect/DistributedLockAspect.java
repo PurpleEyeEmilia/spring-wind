@@ -155,7 +155,7 @@ public class DistributedLockAspect {
             }
 
             lockTrueKey = prefix + lockKey + suffix;
-            if (StringUtils.isBlank(suffix) && lockTrueKey.length() > 0) {
+            if (StringUtils.isNotBlank(suffix) && lockTrueKey.length() > 0) {
                 lockTrueKey = lockTrueKey.substring(0, lockTrueKey.length() - 1);
             }
             return this;

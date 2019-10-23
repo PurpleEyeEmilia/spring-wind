@@ -15,6 +15,7 @@ import com.github.springwind.modules.entity.UserEsInfo;
 import com.github.springwind.modules.entity.UserInfo;
 import com.github.springwind.modules.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.index.query.*;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -72,6 +73,7 @@ public class UserServiceImpl implements UserService, SyncHandler {
                 log.info("开始处理user_info数据");
                 doUserInfo(canalMsg);
             }
+        } else if (CommonConstants.User.USER_ACCOUNT_DB_NAME.equals(canalMsg.getDbName())) {
             if (CommonConstants.User.USER_ACCOUNT_TABLE_NAME.equals(canalMsg.getTableName())) {
                 log.info("开始处理user_account数据");
                 doUserAccount(canalMsg);
@@ -83,19 +85,22 @@ public class UserServiceImpl implements UserService, SyncHandler {
         UserAccount userAccountBeforeData = CanalEntityParser.parse(canalMsg.getBeforeData(), UserAccount.class);
         UserAccount userAccountAfterData = CanalEntityParser.parse(canalMsg.getAfterData(), UserAccount.class);
 
-        if (userAccountBeforeData == null || userAccountAfterData == null) {
+        if (userAccountBeforeData == null && userAccountAfterData == null) {
             return;
         }
 
-        if (CommonConstants.EventType.OPT_UPDATE.equals(canalMsg.getEventType())) {
-            UserEsInfo userEsInfo = userEsDao.findOne(userAccountBeforeData.getUserId());
+        if (CommonConstants.EventType.OPT_UPDATE.equalsIgnoreCase(canalMsg.getEventType())) {
+            UserEsInfo userEsInfo = null;
+            if (userAccountBeforeData != null) {
+                userEsInfo = userEsDao.findOne(userAccountBeforeData.getUserId());
+            }
             if (userEsInfo != null) {
                 UserAccount userAccount = userEsInfo.getUserAccount();
                 UserAccount afterData = CanalEntityParser.parse(userAccount, canalMsg.getAfterData(), UserAccount.class);
                 userEsInfo.setUserAccount(afterData);
                 log.info("更新user_info数据, 数据：{}", JSON.toJSONString(userEsInfo));
                 userEsDao.save(userEsInfo);
-            } else {
+            } else if (userAccountAfterData != null && userAccountAfterData.getUserId() != null) {
                 userEsInfo = new UserEsInfo();
                 userEsInfo.setUserAccount(userAccountAfterData);
                 userEsInfo.setUserId(userAccountAfterData.getUserId());
@@ -103,18 +108,27 @@ public class UserServiceImpl implements UserService, SyncHandler {
                 userEsDao.save(userEsInfo);
             }
 
-        } else if (CommonConstants.EventType.OPT_DELETE.equals(canalMsg.getEventType())) {
-            log.info("插入user_info数据，数据：{}", JSON.toJSONString(userAccountBeforeData));
-            userEsDao.delete(userAccountAfterData.getUserId());
+        } else if (CommonConstants.EventType.OPT_DELETE.equalsIgnoreCase(canalMsg.getEventType())) {
+            if (userAccountAfterData != null) {
+                log.info("插入user_info数据，数据：{}", JSON.toJSONString(userAccountBeforeData));
+                userEsDao.delete(userAccountAfterData.getUserId());
+            }
 
-        } else if (CommonConstants.EventType.OPT_INSERT.equals(canalMsg.getEventType())) {
-            UserEsInfo userEsInfo = userEsDao.findOne(userAccountBeforeData.getUserId());
-            if (userEsInfo == null) {
-                userEsInfo = new UserEsInfo();
-                userEsInfo.setUserAccount(userAccountAfterData);
-                userEsInfo.setUserId(userAccountAfterData.getUserId());
-                log.info("插入user_info数据，数据：{}", JSON.toJSONString(userEsInfo));
-                userEsDao.save(userEsInfo);
+        } else if (CommonConstants.EventType.OPT_INSERT.equalsIgnoreCase(canalMsg.getEventType())) {
+            if (userAccountAfterData != null) {
+                UserEsInfo userEsInfo = userEsDao.findOne(userAccountAfterData.getUserId());
+                if (userEsInfo == null) {
+                    userEsInfo = new UserEsInfo();
+                    userEsInfo.setUserAccount(userAccountAfterData);
+                    userEsInfo.setUserId(userAccountAfterData.getUserId());
+                    log.info("插入user_info数据，数据：{}", JSON.toJSONString(userEsInfo));
+                    userEsDao.save(userEsInfo);
+                } else {
+                    userEsInfo.setUserAccount(userAccountAfterData);
+                    userEsInfo.setUserId(userAccountAfterData.getUserId());
+                    log.info("插入user_info数据，数据：{}", JSON.toJSONString(userEsInfo));
+                    userEsDao.save(userEsInfo);
+                }
             }
         }
     }
@@ -123,45 +137,57 @@ public class UserServiceImpl implements UserService, SyncHandler {
         UserInfo userInfoBeforeData = CanalEntityParser.parse(canalMsg.getBeforeData(), UserInfo.class);
         UserInfo userInfoAfterData = CanalEntityParser.parse(canalMsg.getAfterData(), UserInfo.class);
 
-        if (userInfoBeforeData == null || userInfoAfterData == null) {
+        if (userInfoBeforeData == null && userInfoAfterData == null) {
             return;
         }
 
-        if (CommonConstants.EventType.OPT_UPDATE.equals(canalMsg.getEventType())) {
-            UserEsInfo userEsInfo = userEsDao.findOne(userInfoBeforeData.getUserId());
+        if (CommonConstants.EventType.OPT_UPDATE.equalsIgnoreCase(canalMsg.getEventType())) {
+            UserEsInfo userEsInfo = null;
+            if (userInfoBeforeData != null && userInfoBeforeData.getUserId() != null) {
+                userEsInfo = userEsDao.findOne(userInfoBeforeData.getUserId());
+            }
             if (userEsInfo != null) {
                 UserInfo userInfo = userEsInfo.getUserInfo();
                 UserInfo afterData = CanalEntityParser.parse(userInfo, canalMsg.getAfterData(), UserInfo.class);
                 userEsInfo.setUserInfo(afterData);
-                log.info("更新user_info数据, 数据：{}", JSON.toJSONString(userEsInfo));
                 userEsDao.save(userEsInfo);
-            } else {
+                log.info("更新user_info数据, 数据：{}", JSON.toJSONString(userEsInfo));
+            } else if (userInfoAfterData != null && userInfoAfterData.getUserId() != null) {
                 userEsInfo = new UserEsInfo();
                 userEsInfo.setUserInfo(userInfoAfterData);
                 userEsInfo.setUserId(userInfoAfterData.getUserId());
-                log.info("插入user_info数据，数据：{}", JSON.toJSONString(userEsInfo));
                 userEsDao.save(userEsInfo);
+                log.info("插入user_info数据，数据：{}", JSON.toJSONString(userEsInfo));
             }
 
-        } else if (CommonConstants.EventType.OPT_DELETE.equals(canalMsg.getEventType())) {
-            log.info("插入user_info数据，数据：{}", JSON.toJSONString(userInfoBeforeData));
-            userEsDao.delete(userInfoBeforeData.getUserId());
+        } else if (CommonConstants.EventType.OPT_DELETE.equalsIgnoreCase(canalMsg.getEventType())) {
+            if (userInfoBeforeData != null) {
+                userEsDao.delete(userInfoBeforeData.getUserId());
+                log.info("插入user_info数据，数据：{}", JSON.toJSONString(userInfoBeforeData));
+            }
 
-        } else if (CommonConstants.EventType.OPT_INSERT.equals(canalMsg.getEventType())) {
-            UserEsInfo userEsInfo = userEsDao.findOne(userInfoBeforeData.getUserId());
-            if (userEsInfo == null) {
-                userEsInfo = new UserEsInfo();
-                userEsInfo.setUserInfo(userInfoAfterData);
-                userEsInfo.setUserId(userInfoAfterData.getUserId());
-                log.info("插入user_info数据，数据：{}", JSON.toJSONString(userEsInfo));
-                userEsDao.save(userEsInfo);
+        } else if (CommonConstants.EventType.OPT_INSERT.equalsIgnoreCase(canalMsg.getEventType())) {
+            if (userInfoAfterData != null && userInfoAfterData.getUserId() != null) {
+                UserEsInfo userEsInfo = userEsDao.findOne(userInfoAfterData.getUserId());
+                if (userEsInfo == null) {
+                    userEsInfo = new UserEsInfo();
+                    userEsInfo.setUserInfo(userInfoAfterData);
+                    userEsInfo.setUserId(userInfoAfterData.getUserId());
+                    userEsDao.save(userEsInfo);
+                    log.info("插入user_info数据，数据：{}", JSON.toJSONString(userEsInfo));
+                } else {
+                    userEsInfo.setUserInfo(userInfoAfterData);
+                    userEsInfo.setUserId(userInfoAfterData.getUserId());
+                    userEsDao.save(userEsInfo);
+                    log.info("插入user_info数据，数据：{}", JSON.toJSONString(userEsInfo));
+                }
             }
         }
     }
 
     @Override
-    public String getUser(String id) {
-        return userDao.getUser(id);
+    public UserEsInfo getUser(Long userId) {
+        return userEsDao.findOne(userId);
     }
 
     @Override
@@ -171,17 +197,26 @@ public class UserServiceImpl implements UserService, SyncHandler {
 
     @Override
     public Page<UserEsInfo> getPageInfo(UserDto userDto) {
-        MatchQueryBuilder matchQueryBuilder = QueryBuilders.matchQuery("userInfo.name", userDto.getName());
+        NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
 
-        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("userInfo.age", userDto.getAge());
+        if (StringUtils.isNotBlank(userDto.getName())) {
+            MatchQueryBuilder matchQueryBuilder = QueryBuilders.matchQuery("userInfo.name", userDto.getName());
+            nativeSearchQueryBuilder.withFilter(QueryBuilders.boolQuery().should(matchQueryBuilder));
+        }
 
-        WildcardQueryBuilder wildcardQueryBuilder = QueryBuilders.wildcardQuery("userInfo.sign", "*" + userDto.getSign() + "*");
+        if (userDto.getAge() != null) {
+            TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("userInfo.age", userDto.getAge());
+            nativeSearchQueryBuilder.withFilter(QueryBuilders.boolQuery().must(termQueryBuilder));
+        }
 
-        PageRequest pageRequest = new PageRequest(userDto.getPageNo(), userDto.getPageSize(), Sort.Direction.DESC, "userId");
+        if (StringUtils.isNotBlank(userDto.getSign())) {
+            WildcardQueryBuilder wildcardQueryBuilder = QueryBuilders.wildcardQuery("userInfo.sign", "*" + userDto.getSign() + "*");
+            nativeSearchQueryBuilder.withFilter(QueryBuilders.boolQuery().should(wildcardQueryBuilder));
+        }
 
-        NativeSearchQuery build = new NativeSearchQueryBuilder().withFilter(
-                QueryBuilders.boolQuery().must(termQueryBuilder).should(matchQueryBuilder).should(wildcardQueryBuilder)
-        ).withPageable(pageRequest).build();
+        PageRequest pageRequest = new PageRequest((userDto.getPageNo() - 1) * userDto.getPageSize(), userDto.getPageSize(), Sort.Direction.DESC, "userId");
+
+        NativeSearchQuery build = nativeSearchQueryBuilder.withPageable(pageRequest).build();
 
         List<UserEsInfo> userEsInfos = elasticsearchTemplate.queryForList(build, UserEsInfo.class);
 

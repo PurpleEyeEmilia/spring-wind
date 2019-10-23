@@ -15,10 +15,10 @@ public interface UserService {
     /**
      * 查询用户
      *
-     * @param id
+     * @param userId
      * @return
      */
-    String getUser(String id);
+    UserEsInfo getUser(Long userId);
 
     /**
      * 新增用户

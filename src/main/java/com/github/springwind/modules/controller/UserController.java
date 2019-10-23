@@ -27,9 +27,9 @@ public class UserController {
     private StringRedisTemplate stringRedisTemplate;
 
     @GetMapping("/info")
-    public String getUser(String id) {
-        stringRedisTemplate.opsForValue().set("id", id);
-        return userService.getUser(id);
+    public UserEsInfo getUser(Long userId) {
+//        stringRedisTemplate.opsForValue().set("id", String.valueOf(userId));
+        return userService.getUser(userId);
     }
 
     @PostMapping("/add")

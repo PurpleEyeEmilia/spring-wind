@@ -67,6 +67,7 @@ public abstract class AbstractCanalService {
         worker.setUncaughtExceptionHandler(handler);
         worker.start();
         running = true;
+        log.info("Canal started successfully!");
     }
 
     private void process() {

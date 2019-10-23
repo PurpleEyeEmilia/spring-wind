@@ -21,7 +21,7 @@ public class UserAccount {
      * 用户名
      */
     @Field(type = FieldType.String)
-    private String username;
+    private String userName;
 
     /**
      * 昵称
