@@ -56,7 +56,7 @@ public class SnowflakeGenerator {
     /**
      * 时间戳左移位数
      */
-    private static final Long TIMESTAMP_LEFT = WORKER_LEFT + WORKER_BIT + TIMESTAMP_BIT;
+    private static final Long TIMESTAMP_LEFT = DATA_CENTER_LEFT + DATA_CENTER_BIT;
 
     /**
      * 序列号最大值
@@ -95,6 +95,14 @@ public class SnowflakeGenerator {
     @Value("${snowflake.dataCenterId}")
     private long dataCenterId;
 
+    public SnowflakeGenerator() {
+    }
+
+    public SnowflakeGenerator(Long workId, Long dataCenterId) {
+        this.workId = workId;
+        this.dataCenterId = dataCenterId;
+    }
+
     public synchronized Long getNextId() {
         long currentTimeMillis = System.currentTimeMillis();
 
@@ -125,4 +133,10 @@ public class SnowflakeGenerator {
         }
         return currentTimeMillis;
     }
+
+//    public static void main(String[] args) {
+//        SnowflakeGenerator snowflakeGenerator = new SnowflakeGenerator(0L, 0L);
+//        Long nextId = snowflakeGenerator.getNextId();
+//        System.out.println(nextId);
+//    }
 }

@@ -5,6 +5,7 @@ import com.github.springwind.common.constants.CommonConstants;
 import com.github.springwind.common.utils.CanalEntityParser;
 import com.github.springwind.common.utils.Page;
 import com.github.springwind.core.canal.entity.CanalMsg;
+import com.github.springwind.core.generate.SnowflakeGenerator;
 import com.github.springwind.core.sync.SyncExecutor;
 import com.github.springwind.core.sync.SyncHandler;
 import com.github.springwind.modules.dao.UserDao;
@@ -49,6 +50,9 @@ public class UserServiceImpl implements UserService, SyncHandler {
 
     @Resource
     private ElasticsearchTemplate elasticsearchTemplate;
+
+    @Resource
+    private SnowflakeGenerator snowflakeGenerator;
 
     @PostConstruct
     private void register() {
@@ -192,6 +196,8 @@ public class UserServiceImpl implements UserService, SyncHandler {
 
     @Override
     public String addUser(UserInfo userInfo) {
+        Long userId = snowflakeGenerator.getNextId();
+        userInfo.setUserId(userId);
         return userDao.addUser(userInfo);
     }
 

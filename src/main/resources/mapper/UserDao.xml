@@ -3,11 +3,10 @@
 <mapper namespace="com.github.springwind.modules.dao.UserDao">
 
     <insert id="addUser" parameterType="com.github.springwind.modules.entity.UserInfo">
-        insert
-        user(user_id, age, name) values (#{userId}, #{age}, #{name})
+        insert user_info (user_id, age, name, sign) values (#{userId}, #{age}, #{name}, #{sign})
     </insert>
 
     <select id="getUser" parameterType="java.lang.String" resultType="java.lang.String">
-        select user_id, name, age from userInfo where user_id = #{userId}
+        select user_id, name, age from user_info where user_id = #{userId}
     </select>
 </mapper>
