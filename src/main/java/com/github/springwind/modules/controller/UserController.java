@@ -33,7 +33,7 @@ public class UserController {
     }
 
     @PostMapping("/add")
-    public String addUser(UserInfo userInfo) {
+    public Integer addUser(UserInfo userInfo) {
 //        stringRedisTemplate.opsForValue().set("xx", "1");
         return userService.addUser(userInfo);
     }

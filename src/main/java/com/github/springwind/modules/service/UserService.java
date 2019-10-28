@@ -26,7 +26,7 @@ public interface UserService {
      * @param userInfo
      * @return
      */
-    String addUser(UserInfo userInfo);
+    Integer addUser(UserInfo userInfo);
 
     /**
      * 查询分页

@@ -25,5 +25,5 @@ public interface UserDao {
      * @param userInfo
      * @return
      */
-    String addUser(UserInfo userInfo);
+    Integer addUser(UserInfo userInfo);
 }

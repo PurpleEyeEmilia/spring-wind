@@ -25,7 +25,8 @@ public class SyncExecutor {
      */
     public void process(CanalMsg canalMsg) {
         if (!CollectionUtils.isEmpty(handlerList)) {
-            handlerList.forEach(syncHandler -> syncHandler.handle(canalMsg));
+            //判断是不是自己关注的变更信息，是的话就执行同步
+            handlerList.stream().filter(syncHandler -> syncHandler.watch(canalMsg)).forEach(syncHandler -> syncHandler.handle(canalMsg));
         }
     }
 

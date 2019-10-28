@@ -21,13 +21,13 @@ import org.elasticsearch.index.query.*;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.aggregation.AggregatedPage;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.util.List;
 
 /**
  * @author pengnian
@@ -65,7 +65,9 @@ public class UserServiceImpl implements UserService, SyncHandler {
             return false;
         }
         if (CommonConstants.User.USER_DB_NAME.equals(canalMsg.getDbName())) {
-            return CommonConstants.User.USER_INFO_TABLE_NAME.equals(canalMsg.getTableName()) || CommonConstants.User.USER_ACCOUNT_TABLE_NAME.equals(canalMsg.getTableName());
+            return CommonConstants.User.USER_INFO_TABLE_NAME.equals(canalMsg.getTableName());
+        } else if (CommonConstants.User.USER_ACCOUNT_DB_NAME.equals(canalMsg.getDbName())) {
+            return CommonConstants.User.USER_ACCOUNT_TABLE_NAME.equals(canalMsg.getTableName());
         }
         return false;
     }
@@ -195,7 +197,7 @@ public class UserServiceImpl implements UserService, SyncHandler {
     }
 
     @Override
-    public String addUser(UserInfo userInfo) {
+    public Integer addUser(UserInfo userInfo) {
         Long userId = snowflakeGenerator.getNextId();
         userInfo.setUserId(userId);
         return userDao.addUser(userInfo);
@@ -203,29 +205,35 @@ public class UserServiceImpl implements UserService, SyncHandler {
 
     @Override
     public Page<UserEsInfo> getPageInfo(UserDto userDto) {
-        NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
+        //查询条件
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
 
+        //match query 会对字段（这里是name字段的值），先进行分词，然后再去es里面匹配查询，由于es现在没有安装ik分词器，使用的是默认的分词器，对中文支持不是很好
         if (StringUtils.isNotBlank(userDto.getName())) {
             MatchQueryBuilder matchQueryBuilder = QueryBuilders.matchQuery("userInfo.name", userDto.getName());
-            nativeSearchQueryBuilder.withFilter(QueryBuilders.boolQuery().should(matchQueryBuilder));
+            boolQueryBuilder.must(matchQueryBuilder);
         }
 
+        //term query 不会对字段进行分词，而是以字段的值，直接进行匹配查询
         if (userDto.getAge() != null) {
             TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("userInfo.age", userDto.getAge());
-            nativeSearchQueryBuilder.withFilter(QueryBuilders.boolQuery().must(termQueryBuilder));
+            boolQueryBuilder.must(termQueryBuilder);
         }
 
+        //wildcard query 模糊查询，相当于term级别的模糊查询
         if (StringUtils.isNotBlank(userDto.getSign())) {
             WildcardQueryBuilder wildcardQueryBuilder = QueryBuilders.wildcardQuery("userInfo.sign", "*" + userDto.getSign() + "*");
-            nativeSearchQueryBuilder.withFilter(QueryBuilders.boolQuery().should(wildcardQueryBuilder));
+            boolQueryBuilder.must(wildcardQueryBuilder);
         }
 
-        PageRequest pageRequest = new PageRequest((userDto.getPageNo() - 1) * userDto.getPageSize(), userDto.getPageSize(), Sort.Direction.DESC, "userId");
+        PageRequest pageRequest = new PageRequest(userDto.getPageNo() - 1, userDto.getPageSize(), Sort.Direction.DESC, "userId");
 
-        NativeSearchQuery build = nativeSearchQueryBuilder.withPageable(pageRequest).build();
+        //构建es查询对象
+        NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
+        NativeSearchQuery build = nativeSearchQueryBuilder.withFilter(boolQueryBuilder).withPageable(pageRequest).build();
 
-        List<UserEsInfo> userEsInfos = elasticsearchTemplate.queryForList(build, UserEsInfo.class);
+        AggregatedPage<UserEsInfo> userEsInfos = elasticsearchTemplate.queryForPage(build, UserEsInfo.class);
 
-        return new Page<>(userDto.getPageNo(), userDto.getPageSize(), userEsInfos);
+        return new Page<>(userDto.getPageNo(), userDto.getPageSize(), userEsInfos.getTotalElements(), userEsInfos.getContent());
     }
 }

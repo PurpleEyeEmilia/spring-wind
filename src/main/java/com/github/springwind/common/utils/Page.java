@@ -29,4 +29,11 @@ public class Page<T> {
         this.pageSize = pageSize;
         this.dataList = dataList;
     }
+
+    public Page(Integer pageNo, Integer pageSize, Long total, Collection<T> dataList) {
+        this.pageNo = pageNo;
+        this.pageSize = pageSize;
+        this.total = total;
+        this.dataList = dataList;
+    }
 }
