@@ -226,6 +226,12 @@ public class UserServiceImpl implements UserService, SyncHandler {
             boolQueryBuilder.must(wildcardQueryBuilder);
         }
 
+        //wildcard query 模糊查询，相当于term级别的模糊查询
+        if (StringUtils.isNotBlank(userDto.getNickName())) {
+            WildcardQueryBuilder wildcardQueryBuilder = QueryBuilders.wildcardQuery("userAccount.nickName", "*" + userDto.getNickName() + "*");
+            boolQueryBuilder.must(wildcardQueryBuilder);
+        }
+
         PageRequest pageRequest = new PageRequest(userDto.getPageNo() - 1, userDto.getPageSize(), Sort.Direction.DESC, "userId");
 
         //构建es查询对象

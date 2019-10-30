@@ -3,6 +3,8 @@ package com.github.springwind.modules.entity;
 import com.github.springwind.common.utils.Page;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 
 /**
  * @author pengnian
@@ -21,5 +23,15 @@ public class UserDto extends Page {
     private String sign;
 
     private Integer age;
+
+    /**
+     * 用户名
+     */
+    private String userName;
+
+    /**
+     * 昵称
+     */
+    private String nickName;
 
 }
